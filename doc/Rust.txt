@@ -1,0 +1,204 @@
+borrowing,
+closures,
+crates,   -----------------------packages of code are referred to as crates,Remember that a crate is a collection of Rust source code files.The project we’ve been building is a binary crate, which is an executable. The rand crate is a library crate, which contains code intended to be used in other programs.
+Cargo,------------------------- expects your source files to live inside the src directory.
+functions,
+lifetimes,
+macros,  
+ownership,-------------------------------it enables Rust to make memory safety guarantees without needing a garbage collector
+prelude,--------------------- Rust comes with a variety of things in its standard library. However, if you had to manually import every single thing that you used, it would be very verbose. But importing a lot of things that a program never uses isn’t good either. A balance needs to be struck.The prelude is the list of things that Rust automatically imports into every Rust program.Preludes can be seen as a pattern to make using multiple types more convenient. As such, you’ll find other preludes in the standard library, such as std::io::prelude. Various libraries in the Rust ecosystem may also define their own preludes.The difference between ‘the prelude’ and these other preludes is that they are not automatically use’d, and must be imported manually. This is still easier than importing all of their constituent components.
+structs
+traits,
+Tuple, -----------------------------------------Compound type,A tuple is a general way of grouping together a number of values with a variety of types into one compound type.
+types,
+slices
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+String::new, a function that returns a new instance of a String.String is a string type provided by the standard library that is a growable, UTF-8 encoded bit of text.The :: syntax in the ::new line indicates that new is an associated function of the String type. An associated function is implemented on a type, in this case String, rather than on a particular instance of a String. Some languages call this a static method.
+
+like variables, references are immutable by default
+
+Rust has a number of types named Result in its standard library: a generic Result as well as specific versions for submodules, such as io::Result.The Result types are enumerations, often referred to as enums. An enumeration is a type that can have a fixed set of values, and those values are called the enum’s variants.
+
+For Result, the variants are Ok or Err. The Ok variant indicates the operation was successful, and inside Ok is the successfully generated value. The Err variant means the operation failed, and Err contains information about how or why the operation failed.The purpose of these Result types is to encode error-handling information. Values of the Result type, like values of any type, have methods defined on them. An instance of io::Result has an expect method that you can call. If this instance of io::Result is an Err value, expect will cause the program to crash and display the message that you passed as an argument to expect. If the read_line method returns an Err, it would likely be the result of an error coming from the underlying operating system. If this instance of io::Result is an Ok value, expect will take the return value that Ok is holding and return just that value to you so you can use it.
+
+Cargo understands Semantic Versioning (sometimes called SemVer), which is a standard for writing version numbers. The number 0.8.3 is actually shorthand for ^0.8.3, which means any version that is at least 0.8.3 but below 0.9.0. Cargo considers these versions to have public APIs compatible with version 0.8.3, and this specification ensures you'll get the latest patch release that will still compile with the code in this chapter. Any version 0.9.0 or greater is not guaranteed to have the same API as what the following examples use.
+
+https://crates.io/   Cargo fetches the latest versions of everything from the registry.When you do want to update a crate, Cargo provides another command, update, which will ignore the Cargo.lock file and figure out all the latest versions that fit your specifications in Cargo.toml. If that works, Cargo will write those versions to the Cargo.lock file.But by default, Cargo will only look for versions greater than 0.8.3 and less than 0.9.0. If the rand crate has released two new versions, 0.8.4 and 0.9.0, you would see the following if you ran cargo update:
+$ cargo update
+    Updating crates.io index
+    Updating rand v0.8.3 -> v0.8.4
+	
+	Rust has a strong, static type system. However, it also has type inference. When we wrote let mut guess = String::new(), Rust was able to infer that guess should be a String and didn’t make us write the type. The secret_number, on the other hand, is a number type. A few number types can have a value between 1 and 100: i32, a 32-bit number; u32, an unsigned 32-bit number; i64, a 64-bit number; as well as others. Rust defaults to an i32, which is the type of secret_number unless you add type information elsewhere that would cause Rust to infer a different numerical type.
+	
+	Rust allows us to shadow the previous value of guess with a new one. This feature is often used in situations in which you want to convert a value from one type to another type.Shadowing lets us reuse the guess variable name rather than forcing us to create two unique variables, such as guess_str and guess for example.
+	let guess: u32 = guess.trim().parse().expect("Please type a number!");
+	The colon (:) after guess tells Rust we’ll annotate the variable’s type. Rust has a few built-in number types; the u32 seen here is an unsigned, 32-bit integer. It’s a good default choice for a small positive number.
+	
+	The loop keyword creates an infinite loop.
+	
+	Err(_) . The underscore, _, is a catchall value; in this example, we’re saying we want to match all Err values, no matter what information they have inside them.
+	
+	 const MAX_POINTS: u32 = 100_000; underscores can be inserted in numeric literals to improve readability
+	 few differences between constants and variables.First, you aren’t allowed to use mut with constants. Constants aren’t just immutable by default—they’re always immutable.You declare constants using the const keyword instead of the let keyword, and the type of the value must be annotated. Constants can be declared in any scope, including the global scope, which makes them useful for values that many parts of code need to know about. constants may be set only to a constant expression, not the result of a function call or any other value that could only be computed at runtime.
+	 
+	 Shadowing :- you can declare a new variable with the same name as a previous variable. Rustaceans say that the first variable is shadowed by the second, which means that the second variable’s value is what appears when the variable is used. We can shadow a variable by using the same variable’s name and repeating the use of the let keyword.Shadowing is different from marking a variable as mut, because we’ll get a compile-time error if we accidentally try to reassign to this variable without using the let keyword. By using let, we can perform a few transformations on a value but have the variable be immutable after those transformations have been completed.The other difference between mut and shadowing is that because we’re effectively creating a new variable when we use the let keyword again, we can change the type of the value but reuse the same name. For example, say our program asks a user to show how many spaces they want between some text by inputting space characters, but we really want to store that input as a number
+	 let spaces = "   ";
+    let spaces = spaces.len();
+
+
+Every value in Rust is of a certain data type, which tells Rust what kind of data is being specified so it knows how to work with that data.We’ll look at two data type subsets: scalar and compound.Keep in mind that Rust is a statically typed language, which means that it must know the types of all variables at compile time.
+
+A scalar type represents a single value. Rust has four primary scalar types: integers, floating-point numbers, Booleans, and characters.
+
+The isize and usize types depend on the kind of computer your program is running on: 64 bits if you’re on a 64-bit architecture and 32 bits if you’re on a 32-bit architecture.
+Note that all number literals except the byte literal allow a type suffix, such as 57u8, and _ as a visual separator, such as 1_000.
+If you’re unsure, Rust’s defaults are generally good choices, and integer types default to i32: this type is generally the fastest, even on 64-bit systems. The primary situation in which you’d use isize or usize is when indexing some sort of collection.
+
+When you’re compiling in release mode with the --release flag, Rust does not include checks for integer overflow that cause panics. Instead, if overflow occurs, Rust performs two’s complement wrapping. In short, values greater than the maximum value the type can hold “wrap around” to the minimum of the values the type can hold. In the case of a u8, 256 becomes 0, 257 becomes 1, and so on. The program won’t panic, but the variable will have a value that probably isn’t what you were expecting it to have. Relying on integer overflow’s wrapping behavior is considered an error.
+Wrap in all modes with the wrapping_* methods, such as wrapping_add
+Return the None value if there is overflow with the checked_* methods
+Return the value and a boolean indicating whether there was overflow with the overflowing_* methods
+Saturate at the value's minimum or maximum values with saturating_* methods
+
+Rust’s floating-point types are f32 and f64, which are 32 bits and 64 bits in size, respectively. The default type is f64 because on modern CPUs it’s roughly the same speed as f32 but is capable of more precision.Floating-point numbers are represented according to the IEEE-754 standard. The f32 type is a single-precision float, and f64 has double precision.
+
+Booleans are one byte in size. The Boolean type in Rust is specified using bool. 
+
+Rust’s char type is the language’s most primitive alphabetic type.Rust’s char type is four bytes in size and represents a Unicode Scalar Value, which means it can represent a lot more than just ASCII. Unicode Scalar Values range from U+0000 to U+D7FF and U+E000 to U+10FFFF inclusive.
+
+Compound types can group multiple values into one type. Rust has two primitive compound types: tuples and arrays.
+
+A tuple is a general way of grouping together a number of values with a variety of types into one compound type.Tuples have a fixed length: once declared, they cannot grow or shrink in size.Each position in the tuple has a type, and the types of the different values in the tuple don’t have to be the same.
+fn main() {
+    let tup: (i32, f64, u8) = (500, 6.4, 1);
+}
+To get the individual values out of a tuple, we can use pattern matching to destructure a tuple value, like this:
+fn main() {
+    let tup = (500, 6.4, 1);
+
+    let (x, y, z) = tup; //This is called destructuring, because it breaks the single tuple into three parts. 
+
+    println!("The value of y is: {}", y);
+}
+In addition to destructuring through pattern matching, we can access a tuple element directly by using a period (.) followed by the index of the value we want to access. 
+fn main() {
+    let x: (i32, f64, u8) = (500, 6.4, 1);
+
+    let five_hundred = x.0;//As with most programming languages, the first index in a tuple is 0.
+
+    let six_point_four = x.1;
+
+    let one = x.2;
+}
+
+Unlike a tuple, every element of an array must have the same type. Arrays in Rust are different from arrays in some other languages because arrays in Rust have a fixed length.Arrays are useful when you want your data allocated on the stack rather than the heap when you want to ensure you always have a fixed number of elements. An array isn’t as flexible as the vector type, though. A vector is a similar collection type provided by the standard library that is allowed to grow or shrink in size. 
+You would write an array’s type by using square brackets, and within the brackets include the type of each element, a semicolon, and then the number of elements in the array.
+let a: [i32; 5] = [1, 2, 3, 4, 5];
+if you want to create an array that contains the same value for each element, you can specify the initial value, followed by a semicolon, and then the length of the array in square brackets.
+let a = [3; 5];
+When you attempt to access an element using indexing, Rust will check that the index you’ve specified is less than the array length. If the index is greater than or equal to the length, Rust will panic. This is the first example of Rust’s safety principles in action. In many low-level languages, this kind of check is not done, and when you provide an incorrect index, invalid memory can be accessed. Rust protects you against this kind of error by immediately exiting instead of allowing the memory access and continuing. 
+
+
+one of the most important functions in the language: the main function, which is the entry point of many programs.Rust code uses snake case as the conventional style for function and variable names. In snake case, all letters are lowercase and underscores separate words. 
+fn main() {
+    println!("Hello, world!");
+
+    another_function();
+}
+fn another_function() {
+    println!("Another function.");
+}
+Function definitions in Rust start with fn and have a set of parentheses after the function name. The curly brackets tell the compiler where the function body begins and ends.Functions can also be defined to have parameters, which are special variables that are part of a function’s signature. When a function has parameters, you can provide it with concrete values for those parameters. Technically, the concrete values are called arguments, but in casual conversation, people tend to use the words parameter and argument interchangeably for either the variables in a function’s definition or the concrete values passed in when you call a function.In function signatures, you must declare the type of each parameter. This is a deliberate decision in Rust’s design: requiring type annotations in function definitions means the compiler almost never needs you to use them elsewhere in the code to figure out what you mean.When you want a function to have multiple parameters, separate the parameter declarations with commas.
+Statements are instructions that perform some action and do not return a value. Expressions evaluate to a resulting value.Creating a variable and assigning a value to it with the let keyword is a statement. Function definitions are also statements.Statements do not return values. Therefore, you can’t assign a let statement to another variable.
+let x = (let y = 6);
+The let y = 6 statement does not return a value, so there isn’t anything for x to bind to. This is different from what happens in other languages, such as C and Ruby, where the assignment returns the value of the assignment. In those languages, you can write x = y = 6 and have both x and y have the value 6; that is not the case in Rust.
+Consider a simple math operation, such as 5 + 6, which is an expression that evaluates to the value 11. Expressions can be part of statements:
+The block that we use to create new scopes, {}, is an expression,
+fn main() {
+    let x = 5;
+
+    let y = {
+        let x = 3;
+        x + 1
+    };
+
+    println!("The value of y is: {}", y);
+}
+Note the x + 1 line without a semicolon at the end, which is unlike most of the lines you’ve seen so far
+Expressions do not include ending semicolons. If you add a semicolon to the end of an expression, you turn it into a statement
+In Rust, the return value of the function is synonymous with the value of the final expression in the block of the body of a function.
+ In Rust, the return value of the function is synonymous with the value of the final expression in the block of the body of a function. You can return early from a function by using the return keyword and specifying a value, but most functions return the last expression implicitly. 
+
+
+Rust has three kinds of loops: loop, while, and for. 
+The loop keyword tells Rust to execute a block of code over and over again forever or until you explicitly tell it to stop
+Rust provides another, more reliable way to break out of a loop. You can place the break keyword within the loop to tell the program when to stop executing the loop. 
+One of the uses of a loop is to retry an operation you know might fail, such as checking whether a thread has completed its job. However, you might need to pass the result of that operation to the rest of your code. To do this, you can add the value you want returned after the break expression you use to stop the loop; that value will be returned out of the loop so you can use it
+fn main() {
+    let mut counter = 0;
+
+    let result = loop {
+        counter += 1;
+
+        if counter == 10 {
+            break counter * 2;
+        }
+    };
+
+    println!("The result is {}", result);
+}
+The safety and conciseness of for loops make them the most commonly used loop construct in Rust. Even in situations in which you want to run some code a certain number of times,
+
+
+Rust’s central feature is ownership. Although the feature is straightforward to explain, it has deep implications for the rest of the language.Some languages have garbage collection that constantly looks for no longer used memory as the program runs; in other languages, the programmer must explicitly allocate and free the memory. Rust uses a third approach: memory is managed through a system of ownership with a set of rules that the compiler checks at compile time. None of the ownership features slow down your program while it’s running.In many programming languages, you don’t have to think about the stack and the heap very often. But in a systems programming language like Rust, whether a value is on the stack or the heap has more of an effect on how the language behaves and why you have to make certain decisions. Both the stack and the heap are parts of memory that are available to your code to use at runtime, but they are structured in different ways. The stack stores values in the order it gets them and removes the values in the opposite order. This is referred to as last in, first out.All data stored on the stack must have a known, fixed size. Data with an unknown size at compile time or a size that might change must be stored on the heap instead. The heap is less organized: when you put data on the heap, you request a certain amount of space. The memory allocator finds an empty spot in the heap that is big enough, marks it as being in use, and returns a pointer, which is the address of that location. This process is called allocating on the heap and is sometimes abbreviated as just allocating. Pushing values onto the stack is not considered allocating. Because the pointer is a known, fixed size, you can store the pointer on the stack, but when you want the actual data, you must follow the pointer.Pushing to the stack is faster than allocating on the heap because the allocator never has to search for a place to store new data; that location is always at the top of the stack.Comparatively, allocating space on the heap requires more work, because the allocator must first find a big enough space to hold the data and then perform bookkeeping to prepare for the next allocation.Accessing data in the heap is slower than accessing data on the stack because you have to follow a pointer to get there. Contemporary processors are faster if they jump around less in memory. Continuing the analogy, consider a server at a restaurant taking orders from many tables. It’s most efficient to get all the orders at one table before moving on to the next table. Taking an order from table A, then an order from table B, then one from A again, and then one from B again would be a much slower process. By the same token, a processor can do its job better if it works on data that’s close to other data (as it is on the stack) rather than farther away (as it can be on the heap). Allocating a large amount of space on the heap can also take time.When your code calls a function, the values passed into the function (including, potentially, pointers to data on the heap) and the function’s local variables get pushed onto the stack. When the function is over, those values get popped off the stack.Keeping track of what parts of code are using what data on the heap, minimizing the amount of duplicate data on the heap, and cleaning up unused data on the heap so you don’t run out of space are all problems that ownership addresses. Once you understand ownership, you won’t need to think about the stack and the heap very often, but knowing that managing heap data is why ownership exists can help explain why it works the way it does.
+Ownership Rules:-
+Each value in Rust has a variable that’s called its owner.
+There can only be one owner at a time.
+When the owner goes out of scope, the value will be dropped.
+
+Rust takes a different path: the memory is automatically returned once the variable that owns it goes out of scope.When a variable goes out of scope, Rust calls a special function for us. This function is called drop, and it’s where the author of String can put the code to return the memory. Rust calls drop automatically at the closing curly bracket.
+
+Ways Variables and Data Interact: Move
+let s1 = String::from("hello");
+let s2 = s1;
+To ensure memory safety, there’s one more detail to what happens in this situation in Rust. Instead of trying to copy the allocated memory, Rust considers s1 to no longer be valid and, therefore, Rust doesn’t need to free anything when s1 goes out of scope. Check out what happens when you try to use s1 after s2 is created; it won’t work.If you’ve heard the terms shallow copy and deep copy while working with other languages, the concept of copying the pointer, length, and capacity without copying the data probably sounds like making a shallow copy. But because Rust also invalidates the first variable, instead of being called a shallow copy, it’s known as a move.Rust will never automatically create “deep” copies of your data. Therefore, any automatic copying can be assumed to be inexpensive in terms of runtime performance. If we do want to deeply copy the heap data of the String, not just the stack data, we can use a common method called clone.types such as integers that have a known size at compile time are stored entirely on the stack.
+Rust has a special annotation called the Copy trait that we can place on types like integers that are stored on the stack (we’ll talk more about traits in Chapter 10). If a type implements the Copy trait, an older variable is still usable after assignment. Rust won’t let us annotate a type with the Copy trait if the type, or any of its parts, has implemented the Drop trait. If the type needs something special to happen when the value goes out of scope and we add the Copy annotation to that type, we’ll get a compile-time error. To learn about how to add the Copy annotation to your type to implement the trait, see “Derivable Traits” in Appendix C.any group of simple scalar values can implement Copy, and nothing that requires allocation or is some form of resource can implement Copy. Here are some of the types that implement Copy:
+All the integer types, such as u32
+The Boolean type, bool, with values true and false.
+All the floating point types, such as f64.
+The character type, char.
+Tuples, if they only contain types that also implement Copy. For example, (i32, i32) implements Copy, but (i32, String) does not.
+
+Ownership and Functions
+The semantics for passing a value to a function are similar to those for assigning a value to a variable. Passing a variable to a function will move or copy, just as assignment does.
+Returning values can also transfer ownership.The ownership of a variable follows the same pattern every time: assigning a value to another variable moves it. When a variable that includes data on the heap goes out of scope, the value will be cleaned up by drop unless the data has been moved to be owned by another variable.
+
+References and Borrowing
+fn main() {
+    let s1 = String::from("hello");
+
+    let len = calculate_length(&s1);
+
+    println!("The length of '{}' is {}.", s1, len);
+}
+
+fn calculate_length(s: &String) -> usize {
+    s.len()
+}
+
