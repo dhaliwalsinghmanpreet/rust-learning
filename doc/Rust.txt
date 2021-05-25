@@ -648,3 +648,180 @@ To show Rust where to find an item in a module tree, we use a path in the same w
 A path can take two forms:
 An absolute path starts from a crate root by using a crate name or a literal crate.
 A relative path starts from the current module and uses self, super, or an identifier in the current module.
+Both absolute and relative paths are followed by one or more identifiers separated by double colons (::).
+Modules aren’t useful only for organizing your code. They also define Rust’s privacy boundary: the line that encapsulates the implementation details external code isn’t allowed to know about, call, or rely on. So, if you want to make an item like a function or struct private, you put it in a module.
+The way privacy works in Rust is that all items (functions, methods, structs, enums, modules, and constants) are private by default. Items in a parent module can’t use the private items inside child modules, but items in child modules can use the items in their ancestor modules. The reason is that child modules wrap and hide their implementation details, but the child modules can see the context in which they’re defined. Rust chose to have the module system function this way so that hiding inner implementation details is the default. That way, you know which parts of the inner code you can change without breaking outer code. But you can expose inner parts of child modules' code to outer ancestor modules by using the pub keyword to make an item public.
+
+Exposing Paths with the pub Keyword
+mod front_of_house {
+    pub mod hosting {
+        pub fn add_to_waitlist() {}
+    }
+}
+
+pub fn eat_at_restaurant() {
+    // Absolute path
+    crate::front_of_house::hosting::add_to_waitlist();
+
+    // Relative path
+    front_of_house::hosting::add_to_waitlist();
+}
+-------------------------------------------------------------------------------------------
+Starting Relative Paths with super
+fn serve_order() {}
+
+mod back_of_house {
+    fn fix_incorrect_order() {
+        cook_order();
+        super::serve_order();
+    }
+
+    fn cook_order() {}
+}
+----------------------------------------------------------------------------------------------------------
+Making Structs and Enums Public
+We can also use pub to designate structs and enums as public, but there are a few extra details. If we use pub before a struct definition, we make the struct public, but the struct’s fields will still be private. We can make each field public or not on a case-by-case basis.In contrast, if we make an enum public, all of its variants are then public. We only need the pub before the enum keyword.
+mod back_of_house {
+    pub struct Breakfast {
+        pub toast: String,
+        seasonal_fruit: String,
+    }
+
+    impl Breakfast {
+        pub fn summer(toast: &str) -> Breakfast {
+            Breakfast {
+                toast: String::from(toast),
+                seasonal_fruit: String::from("peaches"),
+            }
+        }
+    }
+}
+pub fn eat_at_restaurant() {
+    // Order a breakfast in the summer with Rye toast
+    let mut meal = back_of_house::Breakfast::summer("Rye");
+    // Change our mind about what bread we'd like
+    meal.toast = String::from("Wheat");
+    println!("I'd like {} toast please", meal.toast);
+
+    // The next line won't compile if we uncomment it; we're not allowed
+    // to see or modify the seasonal fruit that comes with the meal
+    // meal.seasonal_fruit = String::from("blueberries");
+}
+
+
+mod back_of_house {
+    pub enum Appetizer {
+        Soup,
+        Salad,
+    }
+}
+pub fn eat_at_restaurant() {
+    let order1 = back_of_house::Appetizer::Soup;
+    let order2 = back_of_house::Appetizer::Salad;
+}
+
+Bringing Paths into Scope with the use Keyword
+We can bring a path into a scope once and then call the items in that path as if they’re local items with the use keyword.Adding use and a path in a scope is similar to creating a symbolic link in the filesystem.Paths brought into scope with use also check privacy, like any other paths.
+mod front_of_house {
+    pub mod hosting {
+        pub fn add_to_waitlist() {}
+    }
+}
+
+use crate::front_of_house::hosting;
+
+pub fn eat_at_restaurant() {
+    hosting::add_to_waitlist();
+    hosting::add_to_waitlist();
+    hosting::add_to_waitlist();
+}
+--------------------------------------------------------------------------------------
+You can also bring an item into scope with use and a relative path.
+mod front_of_house {
+    pub mod hosting {
+        pub fn add_to_waitlist() {}
+    }
+}
+
+use self::front_of_house::hosting;
+
+pub fn eat_at_restaurant() {
+    hosting::add_to_waitlist();
+    hosting::add_to_waitlist();
+    hosting::add_to_waitlist();
+}
+----------------------------------------------------------------------------------
+Creating Idiomatic use Paths
+mod front_of_house {
+    pub mod hosting {
+        pub fn add_to_waitlist() {}
+    }
+}
+use crate::front_of_house::hosting::add_to_waitlist;
+pub fn eat_at_restaurant() {
+    add_to_waitlist();
+    add_to_waitlist();
+    add_to_waitlist();
+}
+Bringing the function’s parent module into scope with use so we have to specify the parent module when calling the function makes it clear that the function isn’t locally defined while still minimizing repetition of the full path. The code above is unclear as to where add_to_waitlist is defined.
+On the other hand, when bringing in structs, enums, and other items with use, it’s idiomatic to specify the full path.
+--------------------------------------------------------------------------------------------------
+Providing New Names with the as Keyword
+use std::fmt::Result;
+use std::io::Result as IoResult;
+
+fn function1() -> Result {
+    // --snip--
+}
+
+fn function2() -> IoResult<()> {
+    // --snip--
+}
+-------------------------------------------------------------------------------------------------------------------
+Re-exporting Names with pub use
+When we bring a name into scope with the use keyword, the name available in the new scope is private. To enable the code that calls our code to refer to that name as if it had been defined in that code’s scope, we can combine pub and use. This technique is called re-exporting because we’re bringing an item into scope but also making that item available for others to bring into their scope.
+mod front_of_house {
+    pub mod hosting {
+        pub fn add_to_waitlist() {}
+    }
+}
+pub use crate::front_of_house::hosting;
+pub fn eat_at_restaurant() {
+    hosting::add_to_waitlist();
+    hosting::add_to_waitlist();
+    hosting::add_to_waitlist();
+}
+By using pub use, external code can now call the add_to_waitlist function using hosting::add_to_waitlist. If we hadn’t specified pub use, the eat_at_restaurant function could call hosting::add_to_waitlist in its scope, but external code couldn’t take advantage of this new path.Re-exporting is useful when the internal structure of your code is different from how programmers calling your code would think about the domain.
+-------------------------------------------------------------------------------------------------
+Using External Packages
+use rand::Rng;
+
+fn main() {
+    let secret_number = rand::thread_rng().gen_range(1..101);
+}
+--------------------------------------------------------------
+Using Nested Paths to Clean Up Large use Lists
+If we’re using multiple items defined in the same crate or same module, listing each item on its own line can take up a lot of vertical space in our files. For example, these two use statements we had in the Guessing Game in Listing 2-4 bring items from std into scope:
+// --snip--
+use std::cmp::Ordering;
+use std::io;
+// --snip--
+Instead, we can use nested paths to bring the same items into scope in one line. We do this by specifying the common part of the path, followed by two colons, and then curly brackets around a list of the parts of the paths that differ
+// --snip--
+use std::{cmp::Ordering, io};
+// --snip--
+We can use a nested path at any level in a path, which is useful when combining two use statements that share a subpath.
+For example, Listing 7-19 shows two use statements: one that brings std::io into scope and one that brings std::io::Write into scope.
+use std::io;
+use std::io::Write;
+The common part of these two paths is std::io, and that’s the complete first path. To merge these two paths into one use statement, we can use self in the nested path, 
+use std::io::{self, Write};
+This line brings std::io and std::io::Write into scope.
+-----------------------------------------------------------------------------------------------------------------------
+The Glob Operator
+If we want to bring all public items defined in a path into scope, we can specify that path followed by *, the glob operator:
+use std::collections::*;
+This use statement brings all public items defined in std::collections into the current scope. Be careful when using the glob operator! Glob can make it harder to tell what names are in scope and where a name used in your program was defined.
+The glob operator is often used when testing to bring everything under test into the tests module;
+The glob operator is also sometimes used as part of the prelude pattern
+------------------------------------------------------------------------------------------------------------------------------------
