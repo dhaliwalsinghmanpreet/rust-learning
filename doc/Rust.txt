@@ -827,7 +827,7 @@ The glob operator is also sometimes used as part of the prelude pattern
 ------------------------------------------------------------------------------------------------------------------------------------
 Separating Modules into Different Files
 Filename: src/lib.rs
-mod front_of_house; //Using a semicolon after mod front_of_house rather than using a block tells Rust to load the contents of the module from another file with the same name as the module. 
+mod front_of_house; //Using a semicolon after mod front_of_house rather than using a block tells Rust to load the contents of the module from another file with the same name as the module.
 pub use crate::front_of_house::hosting;
 pub fn eat_at_restaurant() {
     hosting::add_to_waitlist();
@@ -842,5 +842,5 @@ pub mod hosting {
 Common Collections
 Rust’s standard library includes a number of very useful data structures called collections. Most other data types represent one specific value,but collections can contain multiple values. Unlike the built-in array and tuple types, the data these collections point to is stored on the heap, which means the amount of data does not need to be known at compile time and can grow or shrink as the program runs. Each kind of collection has different capabilities and costs, and choosing an appropriate one for your current situation is a skill you’ll develop over time.
 A vector allows you to store a variable number of values next to each other.
-A string is a collection of characters. 
+A string is a collection of characters.
 A hash map allows you to associate a value with a particular key. It’s a particular implementation of the more general data structure called a map.
