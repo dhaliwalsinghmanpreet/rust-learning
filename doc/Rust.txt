@@ -844,3 +844,78 @@ Rust’s standard library includes a number of very useful data structures calle
 A vector allows you to store a variable number of values next to each other.
 A string is a collection of characters.
 A hash map allows you to associate a value with a particular key. It’s a particular implementation of the more general data structure called a map.
+
+----------------------------------------------------------------------------------------------------------------------
+Storing Lists of Values with Vectors
+The first collection type we’ll look at is Vec<T>, also known as a vector. Vectors allow you to store more than one value in a single data structure that puts all the values next to each other in memory.Vectors can only store values of the same type. 
+Creating a New Vector
+ let v: Vec<i32> = Vec::new();
+ Note that we added a type annotation here. Because we aren’t inserting any values into this vector, Rust doesn’t know what kind of elements we intend to store. This is an important point. Vectors are implemented using generics; 
+ It’s more common to create a Vec<T> that has initial values, and Rust provides the vec! macro for convenience. The macro will create a new vector that holds the values you give it.
+ let v = vec![1, 2, 3];
+ To create a vector and then add elements to it, we can use the push method
+ let mut v = Vec::new();
+v.push(5);
+Dropping a Vector Drops Its Elements
+{
+	let v = vec![1, 2, 3, 4];
+
+	// do stuff with v
+} // <- v goes out of scope and is freed here
+When the vector gets dropped, all of its contents are also dropped, meaning those integers it holds will be cleaned up. This may seem like a straightforward point but can get a bit more complicated when you start to introduce references to the elements of the vector.
+Reading Elements of Vectors
+There are two ways to reference a value stored in a vector.
+ we’ve annotated the types of the values that are returned from these functions for extra clarity.
+ let v = vec![1, 2, 3, 4, 5];
+
+    let third: &i32 = &v[2];
+    println!("The third element is {}", third);
+
+    match v.get(2) {
+        Some(third) => println!("The third element is {}", third),
+        None => println!("There is no third element."),
+    }
+vectors are indexed by number, starting at zero. Second, the two ways to get the third element are by using & and [], which gives us a reference, or by using the get method with the index passed as an argument, which gives us an Option<&T>.	
+Rust has two ways to reference an element so you can choose how the program behaves when you try to use an index value that the vector doesn’t have an element for. As an example, let’s see what a program will do if it has a vector that holds five elements and then tries to access an element at index 100
+let v = vec![1, 2, 3, 4, 5];
+let does_not_exist = &v[100];
+let does_not_exist = v.get(100);
+When we run this code, the first [] method will cause the program to panic because it references a nonexistent element. This method is best used when you want your program to crash if there’s an attempt to access an element past the end of the vector.
+When the get method is passed an index that is outside the vector, it returns None without panicking. You would use this method if accessing an element beyond the range of the vector happens occasionally under normal circumstances. Your code will then have logic to handle having either Some(&element) or None
+
+
+Iterating over the Values in a Vector
+let v = vec![100, 32, 57];
+    for i in &v {
+        println!("{}", i);
+    }
+	
+We can also iterate over mutable references to each element in a mutable vector in order to make changes to all the elements. 
+let mut v = vec![100, 32, 57];
+    for i in &mut v {
+        *i += 50;
+    }
+To change the value that the mutable reference refers to, we have to use the dereference operator (*) to get to the value in i before we can use the += operator.
+
+Using an Enum to Store Multiple Types
+At the beginning of this chapter, we said that vectors can only store values that are the same type. This can be inconvenient; there are definitely use cases for needing to store a list of items of different types. Fortunately, the variants of an enum are defined under the same enum type, so when we need to store elements of a different type in a vector, we can define and use an enum.
+enum SpreadsheetCell {
+        Int(i32),
+        Float(f64),
+        Text(String),
+    }
+
+    let row = vec![
+        SpreadsheetCell::Int(3),
+        SpreadsheetCell::Text(String::from("blue")),
+        SpreadsheetCell::Float(10.12),
+    ];
+Rust needs to know what types will be in the vector at compile time so it knows exactly how much memory on the heap will be needed to store each element. A secondary advantage is that we can be explicit about what types are allowed in this vector. If Rust allowed a vector to hold any type, there would be a chance that one or more of the types would cause errors with the operations performed on the elements of the vector. Using an enum plus a match expression means that Rust will ensure at compile time that every possible case is handled.
+When you’re writing a program, if you don’t know the exhaustive set of types the program will get at runtime to store in a vector, the enum technique won’t work. Instead, you can use a trait object.
+
+Storing UTF-8 Encoded Text with Strings
+It’s useful to discuss strings in the context of collections because strings are implemented as a collection of bytes, plus some methods to provide useful functionality when those bytes are interpreted as text.We’ll also discuss the ways in which String is different from the other collections, namely how indexing into a String is complicated by the differences between how people and computers interpret String data.
+
+What Is a String?
+Rust has only one string type in the core language, which is the string slice str that is usually seen in its borrowed form &str.we talked about string slices, which are references to some UTF-8 encoded string data stored elsewhere. String literals, for example, are stored in the program’s binary and are therefore string slices.
+ 
