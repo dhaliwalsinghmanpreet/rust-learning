@@ -977,5 +977,37 @@ The format! macro works in the same way as println!, but instead of printing the
 let s = format!("{}-{}-{}", s1, s2, s3);
 
 Indexing into Strings
+In many other programming languages, accessing individual characters in a string by referencing them by index is a valid and common operation. However, if you try to access parts of a String using indexing syntax in Rust, you’ll get an error.
+let s1 = String::from("hello");
+let h = s1[0]; //error here
+Rust strings don’t support indexing. But why not? To answer that question, we need to discuss how Rust stores strings in memory.
 
+Internal Representation
+A String is a wrapper over a Vec<u8>.
+let hello = String::from("Hola");
+In this case, len will be 4, which means the vector storing the string “Hola” is 4 bytes long. Each of these letters takes 1 byte when encoded in UTF-8.
+ let hello = String::from("Здравствуйте");
+ Asked how long the string is, you might say 12. However, Rust’s answer is 24: that’s the number of bytes it takes to encode “Здравствуйте” in UTF-8, because each Unicode scalar value in that string takes 2 bytes of storage. Therefore, an index into the string’s bytes will not always correlate to a valid Unicode scalar value. 
+A final reason Rust doesn’t allow us to index into a String to get a character is that indexing operations are expected to always take constant time (O(1)). But it isn’t possible to guarantee that performance with a String, because Rust would have to walk through the contents from the beginning to the index to determine how many valid characters there were.
 
+Slicing Strings
+Indexing into a string is often a bad idea because it’s not clear what the return type of the string-indexing operation should be: a byte value, a character, a grapheme cluster, or a string slice. Therefore, Rust asks you to be more specific if you really need to use indices to create string slices. To be more specific in your indexing and indicate that you want a string slice, rather than indexing using [] with a single number, you can use [] with a range to create a string slice containing particular bytes:
+let hello = "Здравствуйте";
+let s = &hello[0..4];
+Here, s will be a &str that contains the first 4 bytes of the string. Earlier, we mentioned that each of these characters was 2 bytes, which means s will be Зд.
+What would happen if we used &hello[0..1]? The answer: Rust would panic at runtime in the same way as if an invalid index were accessed in a vector:
+You should use ranges to create string slices with caution, because doing so can crash your program.
+
+Methods for Iterating Over Strings
+If you need to perform operations on individual Unicode scalar values, the best way to do so is to use the chars method. Calling chars on “नमस्ते” separates out and returns six values of type char, and you can iterate over the result to access each element:
+for c in "नमस्ते".chars() {
+    println!("{}", c);
+}
+The bytes method returns each raw byte, which might be appropriate for your domain
+for b in "नमस्ते".bytes() {
+    println!("{}", b);
+}
+But be sure to remember that valid Unicode scalar values may be made up of more than 1 byte.Getting grapheme clusters from strings is complex, so this functionality is not provided by the standard library. Crates are available on crates.io if this is the functionality you need.
+--------------------------------------------------------------------------------------------------------------------------------
+Storing Keys with Associated Values in Hash Maps
+The last of our common collections is the hash map. The type HashMap<K, V> stores a mapping of keys of type K to values of type V. It does this via a hashing function, which determines how it places these keys and values into memory.
