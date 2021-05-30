@@ -3,7 +3,7 @@ closures,
 crates,   -----------------------A tree of modules that produces a library or executable,packages of code are referred to as crates,Remember that a crate is a collection of Rust source code files.The project we’ve been building is a binary crate, which is an executable. The rand crate is a library crate, which contains code intended to be used in other programs.
 Cargo,------------------------- expects your source files to live inside the src directory.
 functions,
-lifetimes,
+lifetimes,-------------- a variety of generics that give the compiler information about how references relate to each other. Lifetimes allow us to borrow values in many situations while still enabling the compiler to check that the references are valid.
 macros,  
 Modules and use,------------------------------------Let you control the organization, scope, and privacy of paths
 ownership,-------------------------------it enables Rust to make memory safety guarantees without needing a garbage collector
@@ -1218,3 +1218,155 @@ To panic! or Not to panic!
 So how do you decide when you should call panic! and when you should return Result? When code panics, there’s no way to recover. You could call panic! for any error situation, whether there’s a possible way to recover or not, but then you’re making the decision on behalf of the code calling your code that a situation is unrecoverable. When you choose to return a Result value, you give the calling code options rather than making the decision for it. The calling code could choose to attempt to recover in a way that’s appropriate for its situation, or it could decide that an Err value in this case is unrecoverable, so it can call panic! and turn your recoverable error into an unrecoverable one. Therefore, returning Result is a good default choice when you’re defining a function that might fail.
 
 Creating Custom Types for Validation
+we can make a new type and put the validations in a function to create an instance of the type rather than repeating the validations everywhere. That way, it’s safe for functions to use the new type in their signatures and confidently use the values they receive.
+pub struct Guess {
+    value: i32,
+}
+impl Guess {
+    pub fn new(value: i32) -> Guess {
+        if value < 1 || value > 100 {
+            panic!("Guess value must be between 1 and 100, got {}.", value);
+        }
+
+        Guess { value }
+    }
+
+    pub fn value(&self) -> i32 {
+        self.value
+    }
+}
+-------------------------------------------------------------------------------------------
+
+Generic Types, Traits, and Lifetimes
+Every programming language has tools for effectively handling the duplication of concepts. In Rust, one such tool is generics. Generics are abstract stand-ins for concrete types or other properties. When we’re writing code, we can express the behavior of generics or how they relate to other generics without knowing what will be in their place when compiling and running the code.Similar to the way a function takes parameters with unknown values to run the same code on multiple concrete values, functions can take parameters of some generic type instead of a concrete type, like i32 or String.
+
+Generic Data Types
+We can use generics to create definitions for items like function signatures or structs, which we can then use with many different concrete data types.
+
+In Function Definitions
+When defining a function that uses generics, we place the generics in the signature of the function where we would usually specify the data types of the parameters and return value.
+To parameterize the types in the new function we’ll define, we need to name the type parameter, just as we do for the value parameters to a function. You can use any identifier as a type parameter name. But we’ll use T because, by convention, parameter names in Rust are short, often just a letter, and Rust’s type-naming convention is CamelCase. Short for “type,” T is the default choice of most Rust programmers.
+When we use a parameter in the body of the function, we have to declare the parameter name in the signature so the compiler knows what that name means. Similarly, when we use a type parameter name in a function signature, we have to declare the type parameter name before we use it. To define the generic largest function, place type name declarations inside angle brackets, <>, between the name of the function and the parameter list
+fn largest<T>(list: &[T]) -> T {}
+We read this definition as: the function largest is generic over some type T. This function has one parameter named list, which is a slice of values of type T. The largest function will return a value of the same type T.
+
+In Struct Definitions
+We can also define structs to use a generic type parameter in one or more fields using the <> syntax.
+struct Point<T> {
+    x: T,
+    y: T,
+}
+fn main() {
+    let integer = Point { x: 5, y: 10 };
+    let float = Point { x: 1.0, y: 4.0 };
+}
+The syntax for using generics in struct definitions is similar to that used in function definitions. First, we declare the name of the type parameter inside angle brackets just after the name of the struct. Then we can use the generic type in the struct definition where we would otherwise specify concrete data types.
+Note that because we’ve used only one generic type to define Point<T>, this definition says that the Point<T> struct is generic over some type T, and the fields x and y are both that same type, whatever that type may be. If we create an instance of a Point<T> that has values of different types as shown in code below our code will not compile
+struct Point<T> {
+    x: T,
+    y: T,
+}
+fn main() {
+    let wont_work = Point { x: 5, y: 4.0 }; // will not compile
+}
+To define a Point struct where x and y are both generics but could have different types, we can use multiple generic type parameters.
+struct Point<T, U> {
+    x: T,
+    y: U,
+}
+fn main() {
+    let both_integer = Point { x: 5, y: 10 };
+    let both_float = Point { x: 1.0, y: 4.0 };
+    let integer_and_float = Point { x: 5, y: 4.0 };
+}
+You can use as many generic type parameters in a definition as you want, but using more than a few makes your code hard to read. When you need lots of generic types in your code, it could indicate that your code needs restructuring into smaller pieces.
+
+In Enum Definitions
+As we did with structs, we can define enums to hold generic data types in their variants
+enum Option<T> {
+    Some(T),
+    None,
+}
+Enums can use multiple generic types as well.
+enum Result<T, E> {
+    Ok(T),
+    Err(E),
+}
+This definition makes it convenient to use the Result enum anywhere we have an operation that might succeed (return a value of some type T) or fail (return an error of some type E).
+
+In Method Definitions
+We can implement methods on structs and enums and use generic types in their definitions, too.Point<T> struct we defined with a method named x implemented on it.
+struct Point<T> {
+    x: T,
+    y: T,
+}
+impl<T> Point<T> {
+    fn x(&self) -> &T {
+        &self.x
+    }
+}
+
+fn main() {
+    let p = Point { x: 5, y: 10 };
+
+    println!("p.x = {}", p.x());
+}
+Note that we have to declare T just after impl so we can use it to specify that we’re implementing methods on the type Point<T>. By declaring T as a generic type after impl, Rust can identify that the type in the angle brackets in Point is a generic type rather than a concrete type.
+We could, for example, implement methods only on Point<f32> instances rather than on Point<T> instances with any generic type.we use the concrete type f32, meaning we don’t declare any types after impl.
+impl Point<f32> {
+    fn distance_from_origin(&self) -> f32 {
+        (self.x.powi(2) + self.y.powi(2)).sqrt()
+    }
+}
+This code means the type Point<f32> will have a method named distance_from_origin and other instances of Point<T> where T is not of type f32 will not have this method defined. The method measures how far our point is from the point at coordinates (0.0, 0.0) and uses mathematical operations that are available only for floating point types.
+
+Generic type parameters in a struct definition aren’t always the same as those you use in that struct’s method signatures.
+The method takes another Point as a parameter, which might have different types from the self Point we’re calling mixup on. The method creates a new Point instance with the x value from the self Point (of type T) and the y value from the passed-in Point (of type W).
+struct Point<T, U> {
+    x: T,
+    y: U,
+}
+
+impl<T, U> Point<T, U> {
+    fn mixup<V, W>(self, other: Point<V, W>) -> Point<T, W> {
+        Point {
+            x: self.x,
+            y: other.y,
+        }
+    }
+}
+
+fn main() {
+    let p1 = Point { x: 5, y: 10.4 };
+    let p2 = Point { x: "Hello", y: 'c' };
+
+    let p3 = p1.mixup(p2);
+
+    println!("p3.x = {}, p3.y = {}", p3.x, p3.y);
+}
+The purpose of this example is to demonstrate a situation in which some generic parameters are declared with impl and some are declared with the method definition. Here, the generic parameters T and U are declared after impl, because they go with the struct definition. The generic parameters V and W are declared after fn mixup, because they’re only relevant to the method.
+
+Performance of Code Using Generics
+The good news is that Rust implements generics in such a way that your code doesn’t run any slower using generic types than it would with concrete types.
+Rust accomplishes this by performing monomorphization of the code that is using generics at compile time. Monomorphization is the process of turning generic code into specific code by filling in the concrete types that are used when compiled.
+In this process, the compiler does the opposite of the steps we used to create the generic function, the compiler looks at all the places where generic code is called and generates code for the concrete types the generic code is called with.
+When Rust compiles this code, it performs monomorphization. During that process, the compiler reads the values that have been used in Option<T> instances and identifies two kinds of Option<T>: one is i32 and the other is f64. As such, it expands the generic definition of Option<T> into Option_i32 and Option_f64, thereby replacing the generic definition with the specific ones.
+The monomorphized version of the code looks like the following. The generic Option<T> is replaced with the specific definitions created by the compiler:
+enum Option_i32 {
+    Some(i32),
+    None,
+}
+
+enum Option_f64 {
+    Some(f64),
+    None,
+}
+
+fn main() {
+    let integer = Option_i32::Some(5);
+    let float = Option_f64::Some(5.0);
+}
+Because Rust compiles generic code into code that specifies the type in each instance, we pay no runtime cost for using generics. When the code runs, it performs just as it would if we had duplicated each definition by hand. The process of monomorphization makes Rust’s generics extremely efficient at runtime.
+--------------------------------------------------------------------------------
+
+Traits: Defining Shared Behavior
