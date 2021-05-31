@@ -1383,3 +1383,69 @@ pub trait Summary {
 Here, we declare a trait using the trait keyword and then the trait’s name, which is Summary in this case. Inside the curly brackets, we declare the method signatures that describe the behaviors of the types that implement this trait, which in this case is fn summarize(&self) -> String.
 After the method signature, instead of providing an implementation within curly brackets, we use a semicolon. Each type implementing this trait must provide its own custom behavior for the body of the method. The compiler will enforce that any type that has the Summary trait will have the method summarize defined with this signature exactly.
 A trait can have multiple methods in its body: the method signatures are listed one per line and each line ends in a semicolon.
+
+Default Implementations
+Sometimes it’s useful to have default behavior for some or all of the methods in a trait instead of requiring implementations for all methods on every type. Then, as we implement the trait on a particular type, we can keep or override each method’s default behavior.
+pub trait Summary {
+    fn summarize(&self) -> String {
+        String::from("(Read more...)")
+    }
+}
+To use a default implementation to summarize instances of NewsArticle instead of defining a custom implementation, we specify an empty impl block with impl Summary for NewsArticle {}.
+Even though we’re no longer defining the summarize method on NewsArticle directly, we’ve provided a default implementation and specified that NewsArticle implements the Summary trait. As a result, we can still call the summarize method on an instance of NewsArticle
+let article = NewsArticle {
+    headline: String::from("Penguins win the Stanley Cup Championship!"),
+    location: String::from("Pittsburgh, PA, USA"),
+    author: String::from("Iceburgh"),
+    content: String::from(
+        "The Pittsburgh Penguins once again are the best \
+         hockey team in the NHL.",
+    ),
+};
+
+println!("New article available! {}", article.summarize());
+
+the syntax for overriding a default implementation is the same as the syntax for implementing a trait method that doesn’t have a default implementation.
+Default implementations can call other methods in the same trait, even if those other methods don’t have a default implementation. In this way, a trait can provide a lot of useful functionality and only require implementors to specify a small part of it. For example, we could define the Summary trait to have a summarize_author method whose implementation is required, and then define a summarize method that has a default implementation that calls the summarize_author method:
+pub trait Summary {
+    fn summarize_author(&self) -> String;
+
+    fn summarize(&self) -> String {
+        format!("(Read more from {}...)", self.summarize_author())
+    }
+}
+To use this version of Summary, we only need to define summarize_author when we implement the trait on a type:
+impl Summary for Tweet {
+    fn summarize_author(&self) -> String {
+        format!("@{}", self.username)
+    }
+}
+
+Traits as Parameters
+we implemented the Summary trait on the NewsArticle and Tweet types. We can define a notify function that calls the summarize method on its item parameter, which is of some type that implements the Summary trait. To do this, we can use the impl Trait syntax, like this:
+pub fn notify(item: &impl Summary) {
+    println!("Breaking news! {}", item.summarize());
+}
+Instead of a concrete type for the item parameter, we specify the impl keyword and the trait name. This parameter accepts any type that implements the specified trait. In the body of notify, we can call any methods on item that come from the Summary trait, such as summarize. We can call notify and pass in any instance of NewsArticle or Tweet. Code that calls the function with any other type, such as a String or an i32, won’t compile because those types don’t implement Summary.
+
+Trait Bound Syntax
+The impl Trait syntax works for straightforward cases but is actually syntax sugar for a longer form, which is called a trait bound; it looks like this:
+pub fn notify<T: Summary>(item: &T) {
+    println!("Breaking news! {}", item.summarize());
+}
+We place trait bounds with the declaration of the generic type parameter after a colon and inside angle brackets.
+If we wanted this function to allow item1 and item2 to have different types, using impl Trait would be appropriate (as long as both types implement Summary).
+pub fn notify(item1: &impl Summary, item2: &impl Summary) {
+If we wanted to force both parameters to have the same type, that’s only possible to express using a trait bound
+pub fn notify<T: Summary>(item1: &T, item2: &T) {
+
+Specifying Multiple Trait Bounds with the + Syntax
+We can also specify more than one trait bound. Say we wanted notify to use display formatting on item as well as the summarize method: we specify in the notify definition that item must implement both Display and Summary. We can do so using the + syntax:
+pub fn notify(item: &(impl Summary + Display)) {
+
+}
+The + syntax is also valid with trait bounds on generic types:
+pub fn notify<T: Summary + Display>(item: &T) {
+
+}
+With the two trait bounds specified, the body of notify can call summarize and use {} to format item.
