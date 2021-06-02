@@ -1899,3 +1899,9 @@ If our project is a binary crate that only contains a src/main.rs file and doesn
 This is one of the reasons Rust projects that provide a binary have a straightforward src/main.rs file that calls logic that lives in the src/lib.rs file. Using that structure, integration tests can test the library crate with use to make the important functionality available. If the important functionality works, the small amount of code in the src/main.rs file will work as well, and that small amount of code doesn’t need to be tested.
 ---------------------------------------------------------------------------------------------------------
 
+Separation of Concerns for Binary Projects
+The organizational problem of allocating responsibility for multiple tasks to the main function is common to many binary projects. As a result, the Rust community has developed a process to use as a guideline for splitting the separate concerns of a binary program when main starts getting large. The process has the following steps:
+Split your program into a main.rs and a lib.rs and move your program’s logic to lib.rs.
+As long as your command line parsing logic is small, it can remain in main.rs.
+When the command line parsing logic starts getting complicated, extract it from main.rs and move it to lib.rs.
+
